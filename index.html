@@ -51,6 +51,7 @@
         d.x = +d.x;
         d.y = +d.y;
         d.value = +d.value;
+        d.color = d.color || "steelblue"; // cor padrão
       });
       
       // Cria uma quadtree com os dados (para exemplificar o uso, mesmo que não seja utilizada em cálculos posteriores)
@@ -67,7 +68,7 @@
         .attr("cx", d => xScale(d.x))
         .attr("cy", d => yScale(d.y))
         .attr("r", d => 5 + d.value)  // o raio varia conforme o valor
-        .attr("fill", "steelblue")
+        .attr("fill", d => d.color)
         .attr("stroke", "black")
         .call(d3.drag()
           .on("start", dragstarted)
