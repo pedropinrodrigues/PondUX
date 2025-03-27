@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Obra: Jardim Interativo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
+    svg {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      display: block;
+      margin: 0 auto;
+    }
+    #info {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+  </style>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <div id="info">
+    <h1>Obra: Jardim Interativo</h1>
+    <p>Interaja: arraste os pontos, use o scroll para dar zoom e clique sobre eles para ver a animação!</p>
+  </div>
+  <svg width="800" height="600"></svg>
+  
+  <script>
+    // Seleciona o SVG e define dimensões
+    const svg = d3.select("svg");
+    const width = +svg.attr("width");
+    const height = +svg.attr("height");
+    
+    // Cria um grupo para aplicar zoom e pan
+    const g = svg.append("g");
+
+    // Define escalas para posicionar os pontos (exemplo com domínio 0 a 100)
+    const xScale = d3.scaleLinear().domain([0, 100]).range([50, width - 50]);
+    const yScale = d3.scaleLinear().domain([0, 100]).range([height - 50, 50]);
+    
+    // Carrega dados de um arquivo CSV externo
+    // O arquivo "data.csv" deve estar no mesmo diretório e conter colunas: x, y, value
+    d3.csv("data.csv").then(data => {
+      // Converte strings para números
+      data.forEach(d => {
+        d.x = +d.x;
+        d.y = +d.y;
+        d.value = +d.value;
+      });
+      
+      // Cria uma quadtree com os dados (para exemplificar o uso, mesmo que não seja utilizada em cálculos posteriores)
+      const quadtree = d3.quadtree()
+                         .x(d => xScale(d.x))
+                         .y(d => yScale(d.y))
+                         .addAll(data);
+      
+      // Adiciona círculos para cada ponto
+      const circles = g.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", d => xScale(d.x))
+        .attr("cy", d => yScale(d.y))
+        .attr("r", d => 5 + d.value)  // o raio varia conforme o valor
+        .attr("fill", "steelblue")
+        .attr("stroke", "black")
+        .call(d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended));
+
+      // Animação: ao clicar, o círculo muda de cor com transições sucessivas
+      circles.on("click", function(event, d) {
+        d3.select(this)
+          .transition()
+          .duration(500)
+          .attr("fill", "orange")
+          .transition()
+          .duration(500)
+          .attr("fill", "steelblue");
+      });
+
+      // Funções para o comportamento de drag
+      function dragstarted(event, d) {
+        d3.select(this).raise().attr("stroke", "red");
+      }
+      function dragged(event, d) {
+        d3.select(this)
+          .attr("cx", d.x = event.x)
+          .attr("cy", d.y = event.y);
+      }
+      function dragended(event, d) {
+        d3.select(this).attr("stroke", "black");
+      }
+      
+    }).catch(error => {
+      console.error("Erro ao carregar os dados:", error);
+    });
+    
+    // Implementa zoom e pan
+    svg.call(d3.zoom()
+      .scaleExtent([0.5, 10])
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+      }));
+  </script>
+</body>
+</html>
